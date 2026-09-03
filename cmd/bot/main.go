@@ -25,6 +25,16 @@ func main() {
 		log.Fatal(err)
 	}
 
+	settings, err := whatsapp.NewSettingsStore("file:data/whatsapp.db?_foreign_keys=on")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer settings.Close()
+
+	//Register auto-reply handler
+	autoreply := whatsapp.NewAutoReplyHandler(client.WhatsApp, settings)
+	autoreply.Register()
+
 	//Belum pernah login
 	if client.WhatsApp.Store.ID == nil {
 		qrChan, err := client.WhatsApp.GetQRChannel(context.Background())
