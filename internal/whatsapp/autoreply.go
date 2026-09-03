@@ -12,13 +12,13 @@ import (
 )
 
 type AutoReplyHandler struct {
-	Client  *whatsmeow.Client
+	Client   *whatsmeow.Client
 	Settings *SettingsStore
 }
 
 func NewAutoReplyHandler(client *whatsmeow.Client, settings *SettingsStore) *AutoReplyHandler {
 	return &AutoReplyHandler{
-		Client:  client,
+		Client:   client,
 		Settings: settings,
 	}
 }
@@ -63,6 +63,7 @@ func (h *AutoReplyHandler) handleEvent(evt any) {
 		return
 	}
 
+	//cooldown state
 	if h.Settings.HasRepliedToday(chatJID) {
 		return
 	}

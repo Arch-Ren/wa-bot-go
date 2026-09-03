@@ -13,7 +13,7 @@ import (
 const (
 	settingKeyAutoReply = "autoreply_enabled"
 	settingKeyReplyText = "autoreply_text"
-	defaultReplyText    = "Pesan Anda sudah diterima. Kami akan segera merespons."
+	defaultReplyText    = "Haloo haloo. Terima kasih sudah menghubungii. Saya *ShoreKeeper* sebagai asisten pribadi Ren disini.\n\nSayangnyaa untuk saat ini nomer ini sedang tidak digunakan karena sebuah alasann. Jika ingin menghubungi Ren silahkan melalui sosial media laiinn atau nomor utamaa Ren. \n\nAlso we consider to hear what you want this bot to be alike. Please consider to message if you have any insight or found some bug. And try to not make people waiting for your response :) \n\nTerima kasih   ⸜(｡˃ ᵕ ˂ )⸝♡"
 	gmt7Offset          = 7 * time.Hour
 )
 
@@ -63,9 +63,8 @@ func (s *SettingsStore) migrate() error {
 	if !s.keyExists(settingKeyAutoReply) {
 		s.setSetting(settingKeyAutoReply, "true")
 	}
-	if !s.keyExists(settingKeyReplyText) {
-		s.setSetting(settingKeyReplyText, defaultReplyText)
-	}
+	// Selalu sync reply text dari code agar perubahan di source langsung berlaku
+	s.setSetting(settingKeyReplyText, defaultReplyText)
 
 	return nil
 }
