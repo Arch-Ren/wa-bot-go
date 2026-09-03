@@ -5,14 +5,14 @@ import (
 
 	"go.mau.fi/whatsmeow/store/sqlstore"
 	//waLog "go.mau.fi/whatsmeow/util/log"
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 func NewDatabase() (*sqlstore.Container, error) {
 
 	container, err := sqlstore.New(
 		context.Background(),
-		"sqlite3",
+		"sqlite",
 		"file:data/whatsapp.db?_foreign_keys=on",
 		nil,
 	)
