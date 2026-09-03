@@ -1,14 +1,67 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"log"
+	"os"
+	"os/signal"
+	"syscall"
+
+	"github.com/mdp/qrterminal/v3"
 
 	"wa-bot-go/internal/whatsapp"
 )
 
 func main() {
-	client := whatsapp.Client{}
+	database, err := whatsapp.NewDatabase()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer database.Close()
 
-	fmt.Println("WhatsApp Bot Starting...")
-	fmt.Printf("Client: %+v\n", client)
+	client, err := whatsapp.NewClient(database)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	//Belum pernah login
+	if client.WhatsApp.Store.ID == nil {
+		qrChan, err := client.WhatsApp.GetQRChannel(context.Background())
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if err := client.WhatsApp.Connect(); err != nil {
+			log.Fatal(err)
+		}
+
+		for evt := range qrChan {
+			switch evt.Event {
+			case "code":
+				fmt.Println("Scan this QR Code:")
+				qrterminal.GenerateHalfBlock(evt.Code, qrterminal.L, os.Stdout)
+
+			case "succes":
+				fmt.Println("WhatsApp Connected!")
+
+			default:
+				fmt.Printf("Login event: %s\n", evt.Event)
+			}
+		}
+	} else {
+		//sudah pernah login
+		if err := client.WhatsApp.Connect(); err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Println("WhatsApp Connected")
+	}
+
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+	<-stop
+
+	client.WhatsApp.Disconnect()
+	fmt.Println("WhatsApp Disconnected!")
 }
