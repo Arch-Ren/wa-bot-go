@@ -10,7 +10,7 @@ func NewRegistry() *Registry {
 	}
 }
 
-func (r *Registry) Regiseter(cmd Command) {
+func (r *Registry) Register(cmd Command) {
 	r.commands = append(r.commands, cmd)
 }
 
