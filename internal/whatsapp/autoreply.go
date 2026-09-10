@@ -60,10 +60,10 @@ func (h *AutoReplyHandler) handleEvent(evt any) {
 
 	cmdCtx := &command.Context{
 		Context: context.Background(),
-		Client: h.Client,
+		Client:  h.Client,
 		Message: msg,
-		Chat: msg.Info.Chat,
-		Sender: msg.Info.Sender,
+		Chat:    msg.Info.Chat,
+		Sender:  msg.Info.Sender,
 	}
 
 	if h.Router.Route(cmdCtx, text) {
@@ -94,24 +94,33 @@ func (h *AutoReplyHandler) handleEvent(evt any) {
 	h.Settings.MarkReplied(chatJID)
 }
 
-func (h *AutoReplyHandler) handleCommand(msg *events.Message, command string) {
-	chatJID := msg.Info.Chat
-	command = strings.TrimSpace(strings.ToLower(command))
+func (h *AutoReplyHandler) RegiserCommand(registry *command.Registry) {
+	registry.Register(command.Command{
+		Name:        "autoreply",
+		Prefix:      "/",
+		Description: "Mengatur auto-reply",
+		AdminOnly:   true,
+		Handler:     h.handleAutoReplyCommand,
+	})
+}
+
+func (h *AutoReplyHandler) handleAutoReplyCommand(ctx *command.Context) {
+	cmd := strings.ToLower(strings.Join(ctx.Args, " "))
 
 	var reply string
 
-	switch command {
+	switch cmd {
 	case "on":
 		h.Settings.SetAutoReplyEnabled(true)
-		reply = "✅ Auto-reply diaktifkan"
+		reply = "Auto-reply diaktifkan"
 	case "off":
 		h.Settings.SetAutoReplyEnabled(false)
-		reply = "❌ Auto-reply dimatikan"
+		reply = "Auto-reply dimatikan"
 	case "status":
 		if h.Settings.IsAutoReplyEnabled() {
-			reply = "📊 Status: Auto-reply AKTIF"
+			reply = "Status: Auto-reply AKTIF"
 		} else {
-			reply = "📊 Status: Auto-reply MATI"
+			reply = "Status: Auto-reply MATI"
 		}
 	case "help":
 		reply = "📖 Perintah auto-reply:\n" +
@@ -123,7 +132,7 @@ func (h *AutoReplyHandler) handleCommand(msg *events.Message, command string) {
 		reply = "❓ Perintah tidak dikenal. Ketik /autoreply help"
 	}
 
-	h.sendReplyDirect(chatJID, reply)
+	h.sendReplyDirect(ctx.Chat, reply)
 }
 
 func (h *AutoReplyHandler) sendReply(msg *events.Message, text string) {

@@ -42,10 +42,13 @@ func main() {
 	registry := command.NewRegistry()
 	router := command.NewRouter(registry, admin)
 
-	_ = router
-
 	//Register auto-reply handler
 	autoreply := whatsapp.NewAutoReplyHandler(client.WhatsApp, settings, router)
+	publicCommand := whatsapp.NewPublicCommand(registry)
+
+	autoreply.RegiserCommand(registry)
+	publicCommand.RegiserCommand(registry)
+
 	autoreply.Register()
 
 	//Belum pernah login
