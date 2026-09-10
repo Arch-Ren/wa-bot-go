@@ -39,7 +39,7 @@ func (r *Router) Route(ctx *Context, text string) bool {
 		isAdmin, err := r.AdminChecker.IsAdmin(ctx.Context, ctx.Sender.String())
 
 		if err != nil {
-			return false
+			return true
 		}
 
 		if !isAdmin {
@@ -49,6 +49,5 @@ func (r *Router) Route(ctx *Context, text string) bool {
 
 	cmd.Handler(ctx)
 
-	println("Debug 1")
 	return true
 }

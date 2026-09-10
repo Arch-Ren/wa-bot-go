@@ -69,6 +69,10 @@ func (s *SettingsStore) migrate() error {
 	return nil
 }
 
+func (s *SettingsStore) DB() *sql.DB {
+	return s.db
+}
+
 func (s *SettingsStore) keyExists(key string) bool {
 	var count int
 	s.db.QueryRowContext(context.Background(), "SELECT COUNT(*) FROM settings WHERE key = ?", key).Scan(&count)

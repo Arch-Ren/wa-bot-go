@@ -5,6 +5,8 @@ import (
 	"log"
 	"strings"
 
+	"wa-bot-go/internal/command"
+
 	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/proto/waE2E"
 	"go.mau.fi/whatsmeow/types"
@@ -14,12 +16,18 @@ import (
 type AutoReplyHandler struct {
 	Client   *whatsmeow.Client
 	Settings *SettingsStore
+	Router   *command.Router
 }
 
-func NewAutoReplyHandler(client *whatsmeow.Client, settings *SettingsStore) *AutoReplyHandler {
+func NewAutoReplyHandler(
+	client *whatsmeow.Client,
+	settings *SettingsStore,
+	router *command.Router,
+) *AutoReplyHandler {
 	return &AutoReplyHandler{
 		Client:   client,
 		Settings: settings,
+		Router:   router,
 	}
 }
 
@@ -50,13 +58,25 @@ func (h *AutoReplyHandler) handleEvent(evt any) {
 		return
 	}
 
-	chatJID := msg.Info.Chat.String()
+	cmdCtx := &command.Context{
+		Context: context.Background(),
+		Client: h.Client,
+		Message: msg,
+		Chat: msg.Info.Chat,
+		Sender: msg.Info.Sender,
+	}
 
-	// Handle command
-	if strings.HasPrefix(text, "/autoreply ") {
-		h.handleCommand(msg, strings.TrimPrefix(text, "/autoreply "))
+	if h.Router.Route(cmdCtx, text) {
 		return
 	}
+
+	chatJID := msg.Info.Chat.String()
+
+	// // Handle command
+	// if strings.HasPrefix(text, "/autoreply ") {
+	// 	h.handleCommand(msg, strings.TrimPrefix(text, "/autoreply "))
+	// 	return
+	// }
 
 	// Auto-reply logic
 	if !h.Settings.IsAutoReplyEnabled() {

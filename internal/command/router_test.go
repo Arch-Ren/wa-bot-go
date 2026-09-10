@@ -74,3 +74,73 @@ func TestRouterPublicCommand(t *testing.T) {
 		t.Fatal("Expected handler to be called")
 	}
 }
+
+func TestRouterAdminAllowed(t *testing.T) {
+	registry := NewRegistry()
+
+	called := false
+
+	registry.Register(Command{
+		Name:      "secret",
+		Prefix:    "/",
+		AdminOnly: true,
+		Handler: func(ctx *Context) {
+			called = true
+		},
+	})
+
+	adminChecker := &mockAdminChecker{
+		allowed: true,
+	}
+
+	router := NewRouter(registry, adminChecker)
+
+	ctx := &Context{
+		Context: context.Background(),
+	}
+
+	handled := router.Route(ctx, "/secret")
+
+	if !handled {
+		t.Fatal("expeted admin command to be handled")
+	}
+
+	if !called {
+		t.Fatal("expected command to be called")
+	}
+}
+
+func TestRouterAdminCommandDenied(t *testing.T) {
+	registry := NewRegistry()
+
+	called := false
+
+	registry.Register(Command{
+		Name:      "secret",
+		Prefix:    "/",
+		AdminOnly: true,
+		Handler: func(ctx *Context) {
+			called = true
+		},
+	})
+
+	adminChecker := &mockAdminChecker{
+		allowed: false,
+	}
+
+	router := NewRouter(registry, adminChecker)
+
+	ctx := &Context{
+		Context: context.Background(),
+	}
+
+	handled := router.Route(ctx, "/secret")
+
+	if handled {
+		t.Fatal("expected admin command to be denied")
+	}
+
+	if called {
+		t.Fatal("expected handler not to be called")
+	}
+}

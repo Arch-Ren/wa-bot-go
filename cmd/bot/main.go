@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+
 	"log"
 	"os"
 	"os/signal"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/mdp/qrterminal/v3"
 
+	"wa-bot-go/internal/command"
 	"wa-bot-go/internal/whatsapp"
 )
 
@@ -31,8 +33,19 @@ func main() {
 	}
 	defer settings.Close()
 
+	admin := whatsapp.NewAdmin(settings.DB())
+
+	if err := admin.Migrate(context.Background()); err != nil {
+		log.Fatal(err)
+	}
+
+	registry := command.NewRegistry()
+	router := command.NewRouter(registry, admin)
+
+	_ = router
+
 	//Register auto-reply handler
-	autoreply := whatsapp.NewAutoReplyHandler(client.WhatsApp, settings)
+	autoreply := whatsapp.NewAutoReplyHandler(client.WhatsApp, settings, router)
 	autoreply.Register()
 
 	//Belum pernah login
