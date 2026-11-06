@@ -53,34 +53,56 @@ func (s *StickerHandler) RegisterCommand(registry *command.Registry) {
 
 func (s *StickerHandler) handleSticker(ctx *command.Context) {
 	msg := ctx.Message
+	log.Printf("Menerima permintaan stiker dari %s", ctx.Sender.String())
+
+	// Cek apakah caption mengandung .sticker atau .s
+	text := extractText(msg)
+	isStickerCmd := strings.Contains(text, ".sticker") || strings.Contains(text, ".s")
 
 	mediaMsg := s.extractMedia(msg)
+
+	// Jika bukan reply, kita harus pastikan pesan ini mengandung media DAN perintah
 	if mediaMsg == nil {
+		log.Println("Media tidak ditemukan")
 		s.sendText(ctx, "Kirim atau reply foto/gif/video dengan caption *.sticker* atau *.s*")
 		return
 	}
 
+	// Jika media ditemukan, tapi tidak ada perintah di caption,
+	// dan bukan reply, jangan proses.
+	if !isStickerCmd && !s.isReply(msg) {
+		return
+	}
+
+	log.Printf("Media ditemukan, mulai download...")
 	data, err := s.downloadMedia(mediaMsg)
 	if err != nil {
-		log.Printf("gagal download media: %v", err)
+		log.Printf("Gagal download media: %v", err)
 		s.sendText(ctx, "Gagal download media")
 		return
 	}
+	log.Printf("Download selesai (%d bytes)", len(data))
 
 	var webpData []byte
 	var isAnimated bool
 
+	doCrop := false
+	if len(ctx.Args) > 0 && (ctx.Args[0] == "sq" || ctx.Args[0] == "square") {
+		doCrop = true
+		log.Println("Crop square diaktifkan")
+	}
+
 	switch m := mediaMsg.(type) {
 	case *waE2E.ImageMessage:
-		webpData, err = s.convertToWebP(data, m.GetMimetype(), false)
+		log.Printf("Memproses Image (mimetype: %s)", m.GetMimetype())
+		webpData, err = s.convertToWebP(data, m.GetMimetype(), false, doCrop)
 		isAnimated = false
 	case *waE2E.VideoMessage:
-		webpData, err = s.convertToWebP(data, m.GetMimetype(), true)
+		log.Printf("Memproses Video/GIF (mimetype: %s)", m.GetMimetype())
+		webpData, err = s.convertToWebP(data, m.GetMimetype(), true, doCrop)
 		isAnimated = true
-	default:
-		s.sendText(ctx, "Format media tidak didukung")
-		return
 	}
+// ... rest of the code
 
 	if err != nil {
 		log.Printf("gagal konversi stiker: %v", err)
@@ -143,7 +165,7 @@ func (s *StickerHandler) downloadMedia(mediaMsg interface{}) ([]byte, error) {
 
 // convertToWebP mengkonversi image/video/gif ke WebP menggunakan ffmpeg
 // Semua konversi menggunakan ffmpeg agar konsisten dan mendukung rounded corners
-func (s *StickerHandler) convertToWebP(data []byte, mimetype string, isVideo bool) ([]byte, error) {
+func (s *StickerHandler) convertToWebP(data []byte, mimetype string, isVideo bool, doCrop bool) ([]byte, error) {
 	tmpDir, err := os.MkdirTemp("", "wa-sticker-*")
 	if err != nil {
 		return nil, fmt.Errorf("gagal buat temp dir: %w", err)
@@ -160,19 +182,24 @@ func (s *StickerHandler) convertToWebP(data []byte, mimetype string, isVideo boo
 		return nil, fmt.Errorf("gagal tulis file input: %w", err)
 	}
 
-	// Build ffmpeg filter: scale, crop center square, rounded corners via geq
-	vf := fmt.Sprintf(
-		"scale=%[1]d:%[1]d:force_original_aspect_ratio=increase,"+
-			"crop=%[1]d:%[1]d,"+
-			"format=rgba,"+
-			"geq="+
-			"r='r(X,Y)':"+
-			"g='g(X,Y)':"+
-			"b='b(X,Y)':"+
-			"a='if(gt((%[1]d/2-abs(X-%[1]d/2))+(%[1]d/2-abs(Y-%[1]d/2)), %[1]d-%[2]d), 255, "+
-			"if(lte(hypot(min(X,%[1]d-1-X)-(%[2]d-1), min(Y,%[1]d-1-Y)-(%[2]d-1)), %[2]d), 255, 0))'",
-		stickerSize, cornerRadius,
-	)
+	// Build filter: Resize ke 512x512
+	var vf string
+	if doCrop {
+		// Scale to cover 512x512, then crop center
+		vf = fmt.Sprintf("scale=%d:%d:force_original_aspect_ratio=increase,crop=%d:%d", stickerSize, stickerSize, stickerSize, stickerSize)
+	} else {
+		// Scale to fit within 512x512
+		vf = fmt.Sprintf("scale=%d:%d:force_original_aspect_ratio=decrease", stickerSize, stickerSize)
+	}
+
+	// Rounded Corners via geq: definisikan r, g, b, a agar FFmpeg tidak error
+	// r, g, b memproses nilai warna asal, a memproses transparansi
+	roundedVf := "format=rgba,geq=" +
+		"r='r(X,Y)':" +
+		"g='g(X,Y)':" +
+		"b='b(X,Y)':" +
+		"a='if(gt(abs(W/2-X),W/2-40)*gt(abs(H/2-Y),H/2-40),if(gt(hypot(X-(if(lt(X,W/2),40,W-40)),Y-(if(lt(Y,H/2),40,H-40))),40),0,255),255)'"
+	vf = vf + "," + roundedVf
 
 	var args []string
 	if isVideo {
@@ -252,6 +279,15 @@ func (s *StickerHandler) sendText(ctx *command.Context, text string) {
 		log.Printf("gagal kirim pesan: %v", err)
 	}
 }
+
+func (s *StickerHandler) isReply(msg *events.Message) bool {
+	if msg.Message == nil {
+		return false
+	}
+	extMsg := msg.Message.GetExtendedTextMessage()
+	return extMsg != nil && extMsg.ContextInfo != nil && extMsg.ContextInfo.QuotedMessage != nil
+}
+
 
 // detectExtension mengembalikan ekstensi file berdasarkan mimetype
 func detectExtension(mimetype string) string {

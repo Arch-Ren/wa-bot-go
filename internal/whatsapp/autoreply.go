@@ -165,5 +165,19 @@ func extractText(msg *events.Message) string {
 		}
 	}
 
+	// Caption gambar
+	if img := msg.Message.GetImageMessage(); img != nil {
+		if caption := img.GetCaption(); caption != "" {
+			return caption
+		}
+	}
+
+	// Caption video
+	if vid := msg.Message.GetVideoMessage(); vid != nil {
+		if caption := vid.GetCaption(); caption != "" {
+			return caption
+		}
+	}
+
 	return ""
 }

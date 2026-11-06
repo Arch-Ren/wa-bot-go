@@ -13,7 +13,7 @@ import (
 const (
 	settingKeyAutoReply = "autoreply_enabled"
 	settingKeyReplyText = "autoreply_text"
-	defaultReplyText    = "Haloo haloo. Terima kasih sudah menghubungii. Saya *ShoreKeeper* sebagai asisten pribadi Ren disini.\n\nSayangnyaa untuk saat ini nomer ini sedang tidak digunakan karena sebuah alasann. Jika ingin menghubungi Ren silahkan melalui sosial media laiinn atau nomor utamaa Ren. \n\nAlso we consider to hear what you want this bot to be alike. Please consider to message if you have any insight or found some bug. And try to not make people waiting for your response :) \n\nTerima kasih   ⸜(｡˃ ᵕ ˂ )⸝♡"
+	defaultReplyText    = "Haloo haloo. Terima kasih sudah menghubungii. Saya *ShoreKeeper* sebagai asisten pribadi Ren disini.\n\nFeel free to chat⸜(｡˃ ᵕ ˂ )⸝♡"
 	gmt7Offset          = 7 * time.Hour
 )
 

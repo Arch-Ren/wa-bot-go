@@ -2,6 +2,7 @@ package command
 
 import (
 	"context"
+	"log"
 )
 
 type Router struct {
@@ -36,13 +37,17 @@ func (r *Router) Route(ctx *Context, text string) bool {
 	ctx.Args = parsed.Args
 
 	if cmd.AdminOnly {
-		isAdmin, err := r.AdminChecker.IsAdmin(ctx.Context, ctx.Sender.String())
+		senderJID := ctx.Sender.ToNonAD().String()
+		log.Printf("Checking admin for: %s", senderJID)
+		isAdmin, err := r.AdminChecker.IsAdmin(ctx.Context, senderJID)
 
 		if err != nil {
+			log.Printf("Admin check error: %v", err)
 			return true
 		}
 
 		if !isAdmin {
+			log.Printf("Access denied for: %s", senderJID)
 			return false
 		}
 	}
