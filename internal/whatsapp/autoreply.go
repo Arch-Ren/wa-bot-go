@@ -44,17 +44,21 @@ func (h *AutoReplyHandler) handleEvent(evt any) {
 
 	// Skip pesan dari diri sendiri
 	if msg.Info.IsFromMe {
+		log.Printf("DEBUG: Skip pesan dari sendiri: %v", msg.Info.Chat.String())
 		return
 	}
 
 	// Skip group chat
 	if msg.Info.IsGroup {
+		log.Printf("DEBUG: Skip grup chat: %v", msg.Info.Chat.String())
 		return
 	}
 
 	// Extract text dari pesan
 	text := extractText(msg)
+	log.Printf("DEBUG: Menerima pesan dari %s: '%s'", msg.Info.Sender.String(), text)
 	if text == "" {
+		log.Println("DEBUG: Teks/Caption kosong, skip")
 		return
 	}
 
@@ -67,8 +71,10 @@ func (h *AutoReplyHandler) handleEvent(evt any) {
 	}
 
 	if h.Router.Route(cmdCtx, text) {
+		log.Println("DEBUG: Berhasil mengeksekusi perintah")
 		return
 	}
+	log.Println("DEBUG: Bukan perintah, mencoba auto-reply...")
 
 	chatJID := msg.Info.Chat.String()
 
