@@ -26,7 +26,7 @@ func (r *Registry) Find(prefix, name string) *Command {
 	return nil
 }
 
-func (r *Registry) PublicComands() []Command {
+func (r *Registry) PublicCommands() []Command {
 	var public []Command
 
 	for _, cmd := range r.commands {

@@ -10,17 +10,17 @@ import (
 	"go.mau.fi/whatsmeow/proto/waE2E"
 )
 
-type PublicComands struct {
+type PublicCommands struct {
 	Registry *command.Registry
 }
 
-func NewPublicCommand(registry *command.Registry) *PublicComands {
-	return &PublicComands{
+func NewPublicCommand(registry *command.Registry) *PublicCommands {
+	return &PublicCommands{
 		Registry: registry,
 	}
 }
 
-func (p *PublicComands) RegiserCommand(registry *command.Registry) {
+func (p *PublicCommands) RegisterCommand(registry *command.Registry) {
 	registry.Register(command.Command{
 		Name:        "about",
 		Prefix:      ".",
@@ -38,7 +38,7 @@ func (p *PublicComands) RegiserCommand(registry *command.Registry) {
 	})
 }
 
-func (p *PublicComands) handleAbout(ctx *command.Context) {
+func (p *PublicCommands) handleAbout(ctx *command.Context) {
 	text := "Ini wa-bot"
 
 	_, err := ctx.Client.SendMessage(
@@ -54,8 +54,8 @@ func (p *PublicComands) handleAbout(ctx *command.Context) {
 	}
 }
 
-func (p *PublicComands) handleHelp(ctx *command.Context) {
-	command := p.Registry.PublicComands()
+func (p *PublicCommands) handleHelp(ctx *command.Context) {
+	command := p.Registry.PublicCommands()
 
 	var builder strings.Builder
 

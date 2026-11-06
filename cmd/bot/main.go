@@ -3,14 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
-
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/mdp/qrterminal/v3"
-
 	"wa-bot-go/internal/command"
 	"wa-bot-go/internal/whatsapp"
 )
@@ -42,16 +40,18 @@ func main() {
 	registry := command.NewRegistry()
 	router := command.NewRouter(registry, admin)
 
-	//Register auto-reply handler
+	// Register existing handlers
 	autoreply := whatsapp.NewAutoReplyHandler(client.WhatsApp, settings, router)
 	publicCommand := whatsapp.NewPublicCommand(registry)
+	stickerHandler := whatsapp.NewStickerHandler(client.WhatsApp)
 
-	autoreply.RegiserCommand(registry)
-	publicCommand.RegiserCommand(registry)
+	autoreply.RegisterCommand(registry)
+	publicCommand.RegisterCommand(registry)
+	stickerHandler.RegisterCommand(registry)
 
 	autoreply.Register()
 
-	//Belum pernah login
+	// Login process
 	if client.WhatsApp.Store.ID == nil {
 		qrChan, err := client.WhatsApp.GetQRChannel(context.Background())
 		if err != nil {
@@ -67,20 +67,16 @@ func main() {
 			case "code":
 				fmt.Println("Scan this QR Code:")
 				qrterminal.GenerateHalfBlock(evt.Code, qrterminal.L, os.Stdout)
-
-			case "succes":
+			case "success":
 				fmt.Println("WhatsApp Connected!")
-
 			default:
 				fmt.Printf("Login event: %s\n", evt.Event)
 			}
 		}
 	} else {
-		//sudah pernah login
 		if err := client.WhatsApp.Connect(); err != nil {
 			log.Fatal(err)
 		}
-
 		fmt.Println("WhatsApp Connected")
 	}
 

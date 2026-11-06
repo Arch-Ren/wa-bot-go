@@ -59,3 +59,12 @@ func (s *Admin) IsAdmin(ctx context.Context, jid string) (bool, error) {
 
 	return exist, err
 }
+
+func (s *Admin) EnsureAdmin(ctx context.Context, jid string, role string) error {
+	_, err := s.db.ExecContext(ctx, `
+	INSERT OR IGNORE INTO admins (jid, role)
+	VALUES (?, ?)
+	`, jid, role)
+
+	return err
+}

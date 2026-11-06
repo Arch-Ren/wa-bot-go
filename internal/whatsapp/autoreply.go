@@ -94,7 +94,7 @@ func (h *AutoReplyHandler) handleEvent(evt any) {
 	h.Settings.MarkReplied(chatJID)
 }
 
-func (h *AutoReplyHandler) RegiserCommand(registry *command.Registry) {
+func (h *AutoReplyHandler) RegisterCommand(registry *command.Registry) {
 	registry.Register(command.Command{
 		Name:        "autoreply",
 		Prefix:      "/",

@@ -59,3 +59,38 @@ func TestAdmin(t *testing.T) {
 		t.Fatal("expected user to no longer be admin")
 	}
 }
+
+func TestEnsureAdmin(t *testing.T) {
+	db, err := sql.Open("sqlite", ":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	ctx := context.Background()
+
+	admin := NewAdmin(db)
+
+	if err := admin.Migrate(ctx); err != nil {
+		t.Fatal(err)
+	}
+
+	jid := "628123456789@s.whatsapp,net"
+
+	if err := admin.EnsureAdmin(ctx, jid, "owner"); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := admin.EnsureAdmin(ctx, jid, "owner"); err != nil {
+		t.Fatal(err)
+	}
+
+	isAdmin, err := admin.IsAdmin(ctx, jid)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !isAdmin {
+		t.Fatal("expected owner to be admin")
+	}
+}
